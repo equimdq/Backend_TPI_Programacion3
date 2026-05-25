@@ -1,244 +1,217 @@
 package com.utn;
 
-import com.utn.dtos.UsuarioDTO;
-import com.utn.entities.*;
+import com.utn.entities.Categoria;
+import com.utn.entities.Pedido;
+import com.utn.entities.Producto;
+import com.utn.entities.Usuario;
 import com.utn.enums.Estado;
 import com.utn.enums.FormaPago;
 import com.utn.enums.Rol;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
 
 import java.time.LocalDate;
-import java.util.*;
-
+import java.util.List;
 
 public class Main {
 
     public static void main(String[] args) {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("miUnidad");
+        EntityManager em = emf.createEntityManager();
 
-        // Categorías
+        Long usuarioIdBuscado;
+        String mailBuscado;
+        Long producto1Id;
+        Long producto2Id;
+        Long productoBorrarId;
+        String sufijoEjecucion = String.valueOf(System.currentTimeMillis());
 
-        Categoria catPizzas = Categoria.builder()
-                .id(1L)
-                .nombre("Pizzas")
-                .descripcion("Pizzas artesanales")
-                .build();
+        try {
+            em.getTransaction().begin();
 
-        Categoria catBebidas = Categoria.builder()
-                .id(2L)
-                .nombre("Bebidas")
-                .descripcion("Bebidas frescas")
-                .build();
+            Categoria catPizzas = Categoria.builder()
+                    .nombre("Pizzas")
+                    .descripcion("Pizzas artesanales")
+                    .build();
 
-        Categoria catBurgers = Categoria.builder()
-                .id(3L)
-                .nombre("Hamburguesas")
-                .descripcion("Hamburguesas de diferentes estilos")
-                .build();
+            Categoria catBebidas = Categoria.builder()
+                    .nombre("Bebidas")
+                    .descripcion("Bebidas frescas")
+                    .build();
 
-        // Productos
+            Categoria catBurgers = Categoria.builder()
+                    .nombre("Hamburguesas")
+                    .descripcion("Hamburguesas de diferentes estilos")
+                    .build();
 
-        Producto p1 = Producto.builder()
-                .id(1L)
-                .nombre("Pizza Muzzarella")
-                .precio(4500.0)
-                .descripcion("Salsa y muzzarella")
-                .stock(20)
-                .imagen("muzza.jpg")
-                .disponible(true)
-                .build();
+            Producto p1 = crearProducto("Pizza Muzzarella", 4500.0, "Salsa y muzzarella", 20, "muzza.jpg");
+            Producto p2 = crearProducto("Coca Cola", 2500.0, "Coca Cola fresca", 20, "coca.jpg");
+            Producto p3 = crearProducto("Hamburguesa", 10500.0, "Hamburguesa de carne vacuna", 20, "hamburguesa.jpg");
+            Producto p4 = crearProducto("Cerveza Quilmes", 3500.0, "Lata 473ml bien helada", 50, "quilmes.jpg");
+            Producto p5 = crearProducto("Empanadas de Carne", 1200.0, "Carne cortada a cuchillo por unidad", 100, "empanadas.jpg");
+            Producto p6 = crearProducto("Papas Fritas", 5500.0, "Porcion grande con sal", 15, "papas.jpg");
+            Producto p7 = crearProducto("Agua Mineral", 1800.0, "500ml sin gas", 30, "agua.jpg");
+            Producto p8 = crearProducto("Pizza Napolitana", 5200.0, "Muzzarella, tomate y ajo", 10, "napo.jpg");
+            Producto p9 = crearProducto("Sandwich de Milanesa", 8500.0, "Lechuga, tomate y mayonesa", 12, "mila.jpg");
+            Producto p10 = crearProducto("Flan con Dulce", 3000.0, "Casero con dulce de leche", 8, "flan.jpg");
 
-        Producto p2 = Producto.builder()
-                .id(2L)
-                .nombre("Coca Cola")
-                .precio(2500.0)
-                .descripcion("Coca Cola fresca")
-                .stock(20)
-                .imagen("coca.jpg")
-                .disponible(true)
-                .build();
+            catPizzas.addProducto(p1);
+            catBebidas.addProducto(p2);
+            catBurgers.addProducto(p3);
+            catBebidas.addProducto(p4);
+            catPizzas.addProducto(p5);
+            catBurgers.addProducto(p6);
+            catBebidas.addProducto(p7);
+            catPizzas.addProducto(p8);
+            catBurgers.addProducto(p9);
+            catPizzas.addProducto(p10);
 
-        Producto p3 = Producto.builder()
-                .id(3L)
-                .nombre("Hamburguesa")
-                .precio(10500.0)
-                .descripcion("Hamburguesa de carne vacuna")
-                .stock(20)
-                .imagen("hamburguesa.jpg")
-                .disponible(true)
-                .build();
+            List<Categoria> categorias = List.of(catPizzas, catBebidas, catBurgers);
+            List<Producto> productos = List.of(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10);
 
-        Producto p4 = Producto.builder()
-                .id(4L)
-                .nombre("Cerveza Quilmes")
-                .precio(3500.0)
-                .descripcion("Lata 473ml bien helada")
-                .stock(50)
-                .imagen("quilmes.jpg")
-                .disponible(true)
-                .build();
+            categorias.forEach(em::persist);
+            productos.forEach(em::persist);
 
-        Producto p5 = Producto.builder()
-                .id(5L)
-                .nombre("Empanadas de Carne")
-                .precio(1200.0)
-                .descripcion("Carne cortada a cuchillo (por unidad)")
-                .stock(100)
-                .imagen("empanadas.jpg")
-                .disponible(true)
-                .build();
+            Usuario u1 = Usuario.builder()
+                    .nombre("Ezequiel")
+                    .apellido("Ventura")
+                    // Mail unico por ejecucion para que la busqueda JPQL devuelva un solo Usuario.
+                    .mail("eze+" + sufijoEjecucion + "@mail.com")
+                    .celular("223555")
+                    .rol(Rol.ADMIN)
+                    .build();
 
-        Producto p6 = Producto.builder()
-                .id(6L)
-                .nombre("Papas Fritas")
-                .precio(5500.0)
-                .descripcion("Porción grande con sal")
-                .stock(15)
-                .imagen("papas.jpg")
-                .disponible(true)
-                .build();
+            Usuario u2 = Usuario.builder()
+                    .nombre("Juan")
+                    .apellido("Perez")
+                    .mail("juan+" + sufijoEjecucion + "@mail.com")
+                    .celular("223444")
+                    .rol(Rol.USUARIO)
+                    .build();
 
-        Producto p7 = Producto.builder()
-                .id(7L)
-                .nombre("Agua Mineral")
-                .precio(1800.0)
-                .descripcion("500ml sin gas")
-                .stock(30)
-                .imagen("agua.jpg")
-                .disponible(true)
-                .build();
+            em.persist(u1);
+            em.persist(u2);
 
-        Producto p8 = Producto.builder()
-                .id(8L)
-                .nombre("Pizza Napolitana")
-                .precio(5200.0)
-                .descripcion("Muzzarella, tomate y ajo")
-                .stock(10)
-                .imagen("napo.jpg")
-                .disponible(true)
-                .build();
+            Pedido ped1 = crearPedido(Estado.PENDIENTE, FormaPago.EFECTIVO);
+            ped1.addDetallePedido(2, p1);
+            ped1.addDetallePedido(1, p2);
+            ped1.calcularTotal();
 
-        Producto p9 = Producto.builder()
-                .id(9L)
-                .nombre("Sándwich de Milanesa")
-                .precio(8500.0)
-                .descripcion("Lechuga, tomate y mayonesa")
-                .stock(12)
-                .imagen("mila.jpg")
-                .disponible(true)
-                .build();
+            Pedido ped2 = crearPedido(Estado.CONFIRMADO, FormaPago.TRANSFERENCIA);
+            ped2.addDetallePedido(1, p3);
+            ped2.addDetallePedido(1, p6);
+            ped2.calcularTotal();
 
-        Producto p10 = Producto.builder()
-                .id(10L)
-                .nombre("Flan con Dulce")
-                .precio(3000.0)
-                .descripcion("Casero con dulce de leche")
-                .stock(8)
-                .imagen("flan.jpg")
-                .disponible(true)
-                .build();
+            Pedido ped3 = crearPedido(Estado.TERMINADO, FormaPago.TARJETA);
+            ped3.addDetallePedido(3, p5);
+            ped3.addDetallePedido(1, p4);
+            ped3.calcularTotal();
 
-        // Usuarios
-        Usuario u1 = Usuario.builder()
-                .id(1L).nombre("Ezequiel").apellido("Ventura")
-                .mail("eze@mail.com").celular("223555").contraseña("admin123").rol(Rol.ADMIN)
-                .build();
+            u1.addPedido(ped1);
+            u1.addPedido(ped2);
+            u2.addPedido(ped3);
 
-        Usuario u2 = Usuario.builder()
-                .id(2L).nombre("Juan").apellido("Perez")
-                .mail("juan@mail.com").celular("223444").contraseña("user123").rol(Rol.USUARIO)
-                .build();
+            // Cascade en Pedido.detalles persiste automáticamente los DetallePedido
+            em.persist(ped1);
+            em.persist(ped2);
+            em.persist(ped3);
 
-        // Pedidos
-        Pedido ped1 = Pedido.builder().id(101L).fecha(LocalDate.now()).estado(Estado.PENDIENTE)
-                .formaPago(FormaPago.EFECTIVO).build();
-        ped1.addDetallePedido(2, p1); // 2 Pizzas
-        ped1.addDetallePedido(1, p2); // 1 Coca
-        ped1.calcularTotal();
+            em.getTransaction().commit();
 
-        Pedido ped2 = Pedido.builder().id(102L).fecha(LocalDate.now()).estado(Estado.CONFIRMADO)
-                .formaPago(FormaPago.TRANSFERENCIA).build();
-        ped2.addDetallePedido(1, p3); // 1 Burger
-        ped2.addDetallePedido(1, p6); // 1 Papas
-        ped2.calcularTotal();
+            usuarioIdBuscado = u1.getId();
+            mailBuscado = u1.getMail();
+            producto1Id = p1.getId();
+            producto2Id = p2.getId();
+            productoBorrarId = p10.getId(); // No está referenciado por ningún DetallePedido
 
-        Pedido ped3 = Pedido.builder().id(103L).fecha(LocalDate.now()).estado(Estado.TERMINADO)
-                .formaPago(FormaPago.TARJETA).build();
-        ped3.addDetallePedido(3, p5); // 3 Empanadas
-        ped3.addDetallePedido(1, p4); // 1 Cerveza
-        ped3.calcularTotal();
+            System.out.println("\n 4 Instanciar y persistir");
+            System.out.println("Usuarios persistidos: 2 -> ids " + u1.getId() + ", " + u2.getId());
+            System.out.println("Pedidos persistidos: 3 -> ids " + ped1.getId() + ", " + ped2.getId() + ", " + ped3.getId());
+            System.out.println("Detalles por pedido: " + ped1.getDetalles().size() + ", " + ped2.getDetalles().size() + ", " + ped3.getDetalles().size());
+            System.out.println("Categorías persistidas: " + categorias.size());
+            System.out.println("Productos persistidos: " + productos.size());
+            System.out.println("Totales pedidos: " + ped1.getTotal() + ", " + ped2.getTotal() + ", " + ped3.getTotal());
+
+            em.clear(); // Limpiamos el contexto para los próximos find
+
+            em.getTransaction().begin();
 
 
-        u1.getPedidos().add(ped1);
-        u1.getPedidos().add(ped2);
-        u2.getPedidos().add(ped3);
+            Producto productoParaActualizar1 = em.find(Producto.class, producto1Id);
+            Producto productoParaActualizar2 = em.find(Producto.class, producto2Id);
 
-        // Lista
-        List<Producto> listaProductos = Arrays.asList(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10);
-
-        System.out.println("--- Un Producto ---");
-        System.out.println(p1.toString());
-
-        System.out.println("--- Listado de Productos ---");
-        listaProductos.forEach(p -> System.out.println(p.toString()));
-
-        // Usuario con más pedidos (En este caso es u1 que tiene ped1 y ped2)
-        System.out.println("--- Pedidos del usuario con más pedidos (Ezequiel) ---");
-        u1.getPedidos().forEach(p -> System.out.println(p.toString()));
+            productoParaActualizar1.setPrecio(4800.0);
+            productoParaActualizar1.setStock(18);
+            productoParaActualizar2.setPrecio(2700.0);
+            productoParaActualizar2.setStock(25);
 
 
-        // Comparación con Equals
+            em.getTransaction().commit();
 
-        Producto pRepetido = Producto.builder()
-                .id(1L) // Mismo ID que p1
-                .nombre("Pizza Muzzarella")
-                .build();
+            System.out.println("\n 5 Actualizar Productos");
+            System.out.println(productoParaActualizar1.getNombre() + " -> precio " + productoParaActualizar1.getPrecio() + ", stock " + productoParaActualizar1.getStock());
+            System.out.println(productoParaActualizar2.getNombre() + " -> precio " + productoParaActualizar2.getPrecio() + ", stock " + productoParaActualizar2.getStock());
 
-        System.out.println("--- Comparación Equals ---");
-        for (Producto prod : listaProductos) {
-            if (prod.equals(pRepetido)) {
-                System.out.println("Se encontró un producto igual: " + prod.getNombre());
+            em.clear();
+
+            Usuario usuarioPorId = em.find(Usuario.class, usuarioIdBuscado);
+
+            System.out.println("\n 6 Buscar un usuario por ID");
+            System.out.println("ID buscado: " + usuarioIdBuscado);
+            System.out.println("Resultado: " + usuarioPorId.getNombre() + " " + usuarioPorId.getApellido() + " - " + usuarioPorId.getMail());
+
+            Usuario usuarioPorMail = em.createQuery(
+                            "SELECT u FROM Usuario u WHERE u.mail = :mail",
+                            Usuario.class
+                    )
+                    .setParameter("mail", mailBuscado)
+                    .getSingleResult();
+
+            System.out.println("\n 7 Buscar un usuario por mail ");
+            System.out.println("Mail buscado: " + mailBuscado);
+            System.out.println("Resultado: id " + usuarioPorMail.getId() + " - " + usuarioPorMail.getNombre() + " " + usuarioPorMail.getApellido());
+
+            em.getTransaction().begin();
+
+
+            Producto productoABorrar = em.find(Producto.class, productoBorrarId);
+            System.out.println("\n 8 Borrar un producto ");
+            System.out.println("Producto a borrar: id " + productoABorrar.getId() + " - " + productoABorrar.getNombre());
+
+            em.remove(productoABorrar);
+            em.getTransaction().commit();
+
+            em.clear();
+            Producto productoBorrado = em.find(Producto.class, productoBorrarId);
+            System.out.println("Verificación post-delete: " + (productoBorrado == null ? "producto eliminado" : "producto todavía existe"));
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
             }
-        }
-
-        UsuarioDTO dto = new UsuarioDTO(u1.getNombre(), u1.getApellido(), u1.getMail(), u1.getCelular());
-
-        System.out.println("--- Información de Usuario (DTO - Seguro) ---");
-        System.out.println(dto);
-
-
-        // --- TP Programación Funcional---
-
-        System.out.println("\n--- TP Programación Funcional ---");
-
-        // Consigna 2
-        System.out.println("---Consigna 2: Productos Disponibles ---");
-        listaProductos.stream()
-                .filter(Producto::getDisponible)
-                .forEach(System.out::println);
-
-
-        // Consigna 3
-
-        System.out.println("--- Consigna 3: Cantidad de ítems en pedido 1 ---");
-        int totalItems = ped1.getDetalles().stream()
-                .mapToInt(DetallePedido::getCantidad)
-                .sum();
-        System.out.println("Items en pedido 1: " + totalItems);
-
-        // Consigna 4
-
-        System.out.println("--- Consigna 4: Productos menores a 5 en stock ---");
-        List<Producto> productosBajoStock = listaProductos.stream()
-                .filter(producto -> producto.getStock() < 5)
-                .toList();
-
-        if (productosBajoStock.isEmpty()) {
-            System.out.println("No hay productos con stock menor a 5");
-        }
-        else  {
-            productosBajoStock.forEach(System.out::println);
+            throw e;
+        } finally {
+            em.close();
+            emf.close();
         }
     }
 
+    private static Producto crearProducto(String nombre, double precio, String descripcion, int stock, String imagen) {
+        return Producto.builder()
+                .nombre(nombre)
+                .precio(precio)
+                .descripcion(descripcion)
+                .stock(stock)
+                .imagen(imagen)
+                .disponible(true)
+                .build();
+    }
+
+    private static Pedido crearPedido(Estado estado, FormaPago formaPago) {
+        return Pedido.builder()
+                .fecha(LocalDate.now())
+                .estado(estado)
+                .formaPago(formaPago)
+                .build();
+    }
 }
-
-
